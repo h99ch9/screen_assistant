@@ -1,0 +1,12 @@
+Command: ['/review-workspace/screen_assistant_repair/project/.venv/bin/python', 'verify_offscreen_qtest.py']
+Exit: 1
+Traceback (most recent call last):
+  File "/review-workspace/screen_assistant_repair/original/verify_offscreen_qtest.py", line 8, in <module>
+    w = MainWindow()
+        ^^^^^^^^^^^^
+  File "/review-workspace/screen_assistant_repair/original/screen_assistant/main_window.py", line 84, in __init__
+    self._bind_state()
+  File "/review-workspace/screen_assistant_repair/original/screen_assistant/main_window.py", line 359, in _bind_state
+    self._state.bind_image_changed(self._on_image_changed)
+                                   ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute '_on_image_changed'

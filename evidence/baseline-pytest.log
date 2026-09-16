@@ -1,0 +1,4 @@
+Command: ['/review-workspace/screen_assistant_repair/project/.venv/bin/python', '-m', 'pytest', '--collect-only', '-q', 'screen_assistant/test_verification.py']
+Exit: 5
+
+no tests collected in 0.03s

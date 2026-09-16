@@ -1,0 +1,9 @@
+Working directory: /review-workspace/screen_assistant_repair/project
+Command: uv run --locked --extra test python -m pytest -q
+Timeout: 45s
+QT_QPA_PLATFORM=offscreen; fake HTTP server only.
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 15.10s
+
+Exit: 0

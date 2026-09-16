@@ -1,0 +1,12 @@
+Working directory: /review-workspace/screen_assistant_repair/original
+Command: ['uv', 'sync', '--locked', '--extra', 'test']
+Exit: 2
+
+warning: Ignoring existing virtual environment linked to non-existent Python interpreter: .venv/bin/python3 -> python
+Using CPython 3.12.14 interpreter at: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3
+Removed virtual environment at: .venv
+Creating virtual environment at: .venv
+error: Failed to fetch: `https://pypi.org/simple/pillow/`
+  Caused by: error sending request for url (https://pypi.org/simple/pillow/)
+  Caused by: client error (Connect)
+  Caused by: operation timed out

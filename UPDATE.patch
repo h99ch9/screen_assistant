@@ -1,0 +1,1074 @@
+--- a/README.md
++++ b/README.md
+@@ -1,11 +1,12 @@
+-# Screen Assistant — image-question checkpoint
++# Screen Assistant 0.3.0 — text questions and optional images
+ 
+-Screen Assistant opens **one image you choose** and can ask an installed
+-Ollama vision model a question about it. It uses Python 3.12+, PySide6 and uv
+-on the existing Linux Mint desktop setup.
++Screen Assistant answers **text questions without requiring an image** using
++an installed local Ollama model. You can optionally open a PNG or JPEG and ask
++a vision model about it. It uses Python 3.12+, PySide6 and uv on the existing
++Linux Mint desktop setup.
+ 
+-This repaired checkpoint covers the image workflow already present in the
+-uploaded project. Screen capture, continuous observation, browser and terminal
++This update makes the image optional and accepts verified text models.
++Screen capture, continuous observation, browser and terminal
+ integration, voice, model downloads and additional providers are outside scope.
+ 
+ ## Run on your PC
+@@ -32,7 +33,7 @@
+ ```
+ 
+ The user installed uv at ~/.local/bin and confirmed libxcb-cursor0 was already
+-installed on the PC. Neither needs reinstalling for this repair. If a new terminal
++installed on the PC. Neither needs reinstalling for this update. If a new terminal
+ cannot find uv, run `export PATH="$HOME/.local/bin:$PATH"` in that terminal.
+ 
+ No LD_LIBRARY_PATH change, private library copy, global offscreen setting,
+@@ -41,33 +42,35 @@
+ existing PC shortcuts were not inspected or modified.
+ 
+ If --locked reports a mismatch, stop and inspect pyproject.toml versus uv.lock
+-before changing dependencies. This repair deliberately refreshed the lockfile
+-because the uploaded lock omitted the already-declared Pillow dependency and
+-pytest test extra. The PySide6, Essentials, Addons and Shiboken pins stay at
+-6.11.2. Package metadata now agrees with the existing 0.2.0 application version.
++before changing dependencies. This update changed only the application's own
++version in the lockfile, from 0.2.0 to 0.3.0. All third-party pins are unchanged;
++PySide6, Essentials, Addons and Shiboken remain at 6.11.2.
+ requirements.txt is a generated runtime-only export; uv.lock is authoritative.
+ 
+ ## Use the current workflow
+ 
+-1. **Open image** (or File → Open image / Ctrl+O): select a PNG or JPEG.
+-   Opening or cancelling the picker makes no model request.
+-2. **Check connection**: list installed models from Ollama at 127.0.0.1:11434.
+-   Choose a model from the dropdown. Its /api/show capabilities must include
+-   vision before Ask can become available. A text-only or unverified model
+-   leaves Ask disabled.
+-3. Type a question. **Ask** becomes available when the image, question and
+-   verified vision model are ready. Ask sends the current image and question,
+-   with the application's system instructions, in one non-streaming request.
++1. **Check connection**: list installed models from Ollama at 127.0.0.1:11434.
++   Choose a local text or vision model from the dropdown. The app checks that
++   the model can generate answers. An embedding-only model is not suitable.
++2. Type a question and press **Ask** or Enter. With no image attached, only
++   the question and text-specific system instructions are sent. The source
++   indicator reads **Text only — no image**.
++3. For an image question, use **Open image** (or Ctrl+O) to select a PNG or JPEG,
++   and choose a model with verified vision support. The source indicator shows
++   the image filename. If a text-only model is selected, Ask stays disabled and
++   a message explains that you must clear the image or choose a vision model.
++   Opening or cancelling the picker sends no image or question to Ollama.
+ 4. **Cancel** stops waiting for the active request. Changing the image or model,
+    clearing the image, or closing the window also invalidates the request.
+    Late responses cannot replace the current result.
+-5. **Clear image** clears the preview and answer without changing the original
+-   image file. **Quit**, Ctrl+Q and the window close button save geometry and
+-   close the application.
++5. **Clear image** returns to text questions, clearing the preview and answer
++   while retaining the question you typed. The original file is unchanged.
++   **Quit**, Ctrl+Q and the window close button save geometry and close the app.
+ 
+ Preview images retain their proportions during resize. Answers appear as plain
+-text, with the selected model and measured elapsed time. The app sends no prior
+-answer or conversation history with a new question. Observation stays off.
++text, with the selected model and measured elapsed time. Each question gets one
++non-streaming response. The app sends no prior answer or conversation history
++with a new question. Observation stays off.
+ Only window geometry is written to QSettings; the old observations_on key is
+ removed without discarding geometry.
+ 
+@@ -77,9 +80,10 @@
+ or share its conversation state with Hermes. It sends requests directly to a
+ loopback address with proxies and HTTP redirects disabled.
+ 
+-Use an installed **local vision model**. The ordinary llama3.2:latest model is
+-text-only; its name is different from llama3.2-vision. There is no assumed
+-default model and no automatic large download.
++Use an installed **local model that can generate answers**. Text-only models
++work without an image; image attachments require vision support. The app reads
++the model's reported capabilities rather than guessing from its name. There is
++no assumed default model and no automatic download.
+ 
+ Ollama can route requests to cloud models even when its API is on localhost.
+ This client rejects identified remote models, but a localhost address alone
+@@ -139,23 +143,28 @@
+ 
+ The package cache may be reused; the virtual environment in check_dir is new.
+ 
+-## Manual checks still required for this repaired build
++## Manual checks for this update
+ 
+ In a real desktop session, inspect the title and window, resize it to its minimum,
+-confirm disabled Ask is distinct, and open/close About. Load a non-sensitive
++confirm disabled Ask is distinct, and open/close About. Select an installed
++text model, type "What is two plus two?", and Ask with no image. Confirm a real
++answer appears. Then load a non-sensitive
+ PNG and JPEG and check their previews. With a verified local vision model,
+ ask about three known images (terminal text, a webpage screenshot and a diagram).
+ Record the exact model tag, whether the response is grounded in the image,
+ and any unreadable text or incorrect answer. Exercise Cancel, clear and replace.
++Clear the image and ask another text question; confirm no old image is sent.
+ Check File → Quit, Ctrl+Q, and remembered size/position after relaunch.
+ 
+-The user's earlier screenshot and confirmation establish that the **earlier
+-foundation** launched on their PC. They do not establish that this repaired
+-image workflow or real-model inference has passed live testing.
++The user reports that the preceding image-question build now works. This is
++user-reported evidence, not an independently recorded accuracy or performance
++test. The new text-question flow has been tested offscreen with a fake server;
++its real-model and live desktop checks remain to be performed on the PC.
+ 
+ See VERIFICATION.md and evidence/ for the review findings, exact results and
+ remaining checks. Offscreen renders are explicitly labelled; they do not prove
+-a live desktop launch.
++a live desktop launch. UPDATE.patch shows the changes from the previously
++delivered 0.2.0 source. Historical repair evidence remains under evidence/.
+ 
+ ## References
+ 
+--- a/START_HERE.md
++++ b/START_HERE.md
+@@ -1,10 +1,10 @@
+-# Open the repaired checkpoint
++# Open Screen Assistant 0.3.0
+ 
+-This package contains the repaired image-question milestone, its test suite,
+-a reviewable patch, and the actual verification logs.
++This update lets you ask questions without uploading an image. Image questions
++remain available when you attach an image and choose a vision model.
+ 
+ 1. Extract the ZIP into a **new folder**. It contains a folder named
+-   screen-assistant-repaired.
++   screen-assistant-0.3.0. Keep your working project folder as a backup.
+ 2. Open that folder in your Linux Mint file manager. Right-click an empty area
+    and choose **Open in Terminal**.
+ 3. Run the following commands, stopping if one reports an error:
+@@ -15,13 +15,17 @@
+ env -u QT_QPA_PLATFORM uv run --locked python -m screen_assistant
+ ```
+ 
+-The automated test run should report **51 passed**. It uses synthetic images and
++The automated test run should report **76 passed**. It uses synthetic images and
+ a fake local server. No real Ollama model is needed for those checks.
+ 
+ The last command opens the actual desktop application. Check Open image, the
+ preview, resizing, About, Quit/Ctrl+Q, and remembered size/position. The app starts
+-with observation off and Ask disabled. For a real answer, Check connection, choose
+-an installed vision model, load an image and type a question.
++with observation off and Ask disabled. For a text answer, click **Check
++connection**, select an installed local text or vision model, type a question,
++and click **Ask**. No image is needed. About should show version **0.3.0**.
++
++If an image is attached, **Clear image** returns to text questions while keeping
++your typed question. An attached image still requires a vision model.
+ 
+ Your existing project is at /path/to/screen-assistant. These steps run the
+ extracted copy. The repair package does not apply itself to your existing project,
+@@ -29,11 +33,8 @@
+ 
+ README.md explains operation and remaining manual checks.
+ VERIFICATION.md separates actual results, failed attempts and pending checks.
+-REPAIR.patch shows source/documentation changes against the supplied archive.
+-SOURCE_SHA256SUMS.txt identifies the 20 tested project files.
+-The evidence folder includes test logs and an explicitly offscreen render.
+-
+-The earlier claims that the uploaded app passed all tests were incorrect:
+-it crashed during window construction and pytest found zero tests. Importing
+-valid Python code is only one check; constructing and exercising the actual
+-window exposed the defects.
++UPDATE.patch shows changes from the previously delivered 0.2.0 source.
++SOURCE_SHA256SUMS.txt identifies the tested project files.
++The evidence/text-questions folder includes this update's logs and explicitly
++offscreen renders. The previous repair report is retained as historical evidence.
++Real Ollama inference on your PC was not performed by this review.
+--- a/VERIFICATION.md
++++ b/VERIFICATION.md
+@@ -1,141 +1,89 @@
+-# Verification checkpoint — 2026-09-16
++# Screen Assistant 0.3.0 verification — 2026-09-16
+ 
+-## Scope and actual locations
++This update makes images optional. It builds on the previously delivered 0.2.0
++repair. The old UI required an image and the old client rejected every text-only
++model. Both restrictions have now been changed.
+ 
+-Input: screen-assistant-review-20260915-172132.zip, supplied by the user.
+-The existing PC project was reported at /path/to/screen-assistant.
+-This review did **not** access or modify that PC directory.
+-
+-The upload was inspected at:
+-`/review-workspace/screen_assistant_repair/original`
+-
+-Repairs were made in a separate copy:
++Work and verification took place at:
+ `/review-workspace/screen_assistant_repair/project`
+ 
+-The rebuilt archive was independently extracted and tested at:
+-`/review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired`
++The user's reported PC project is `/path/to/screen-assistant`; this review
++did not access or modify that directory. Extracting the ZIP creates a separate
++`screen-assistant-0.3.0` folder. About identifies the new version.
+ 
+-This is a repair of the existing image-question implementation. No live capture,
+-browser/terminal integration, new provider, or model-download feature was added.
+-The archive had no launch.sh, desktop shortcut files or Git history, despite the
+-earlier report. No unrelated PC files or installed shortcuts were changed.
++## Behavior
+ 
+-## Findings in the upload
++- With no image, a verified local model with the `completion` capability can
++  answer a nonblank question. The request contains text-specific system
++  instructions and the current question, with no `images` field.
++- With an image, the same model must additionally report `vision`. A text-only
++  model is blocked with an explanation; the image is never silently discarded.
++- Clear image cancels an active request, discards the image and old answer,
++  and keeps the typed question so it can be sent as text.
++- Embedding-only, unverified and identified remote models stay blocked.
++- Questions remain independent: previous answers and images are not included
++  in subsequent text requests. Observation remains off; only geometry persists.
++- Text surfaces have explicit foreground/background colors, correcting the
++  dark text on dark backgrounds visible in the user's screenshot.
+ 
+-| Finding | Evidence | Repair |
+-|---|---|---|
+-| Window construction crashed | Original QTest run: AttributeError for missing _on_image_changed, exit 1 | Connected actual controls and explicit state updates |
+-| Pytest executed no tests | Original collection: zero tests, exit 5; functions used check_ names | One maintained pytest suite with 51 collected cases |
+-| Lockfile did not match project metadata | Pillow and pytest extra were declared but absent from uv.lock | Deliberately refreshed lock and runtime requirements export; kept Qt 6.11.2 |
+-| Open/Clear buttons and question changes were disconnected | Source inspection | Connected actions and readiness updates; real UI tests |
+-| Model selector was a label; checking connection did not reach verification | Source inspection | Real dropdown, model listing, selected-model verification |
+-| Fake server repeated the client's wrong capabilities shape | Source inspection against official API | Realistic string-array capabilities and model request field |
+-| Analysis relied on readyRead finding isFinished; system prompt was unused | Source inspection | Completion on finished, validated JSON, actual system and user messages |
+-| Cancellation and old callbacks could alter new state | Source inspection | Identity checks, explicit cancellation, deadline ownership and cleanup |
+-| Preview resize filter was absent; geometry was saved but not restored | Source inspection | Resize handling and geometry restore; isolated settings tests |
+-| Image data was fully read/decoded before limits were checked | Source inspection | Bounded read and header validation before full decoding |
+-| Observation was already hard-coded off; stale settings remained possible | Source inspection | Kept observation off, removed only the legacy observations_on key |
+-| About and README described conflicting milestones/versions | Source inspection | One current About dialog and evidence-based documentation |
++The implementation follows Ollama's documented
++[model capabilities](https://docs.ollama.com/api-reference/show-model-details)
++and [chat request format](https://docs.ollama.com/api/chat).
+ 
+-The original Python files parsed, but that did not establish that the window
+-could be constructed or the application workflow worked. Earlier blanket PASS
+-claims are not carried forward.
+-
+-The Ollama changes follow the documented
+-[show-model capabilities](https://docs.ollama.com/api-reference/show-model-details)
+-and [chat request/response format](https://docs.ollama.com/api/chat). Fake-server
+-success establishes client behavior against those shapes, not compatibility
+-or answer quality with the user's particular running model.
+-
+-## Completed checks
+-
+-All commands below ran in this review environment unless explicitly labelled
+-user-reported. Full commands, working directories and exit statuses are retained
+-in evidence/. Python was 3.12.14; PySide6 and its Qt dependencies remained 6.11.2.
++## Results
+ 
+ | Check | Test mode | Command or procedure | Result | Evidence |
+ |---|---|---|---|---|
+-| Original source syntax | Static | Parse all uploaded Python modules with ast.parse | Passed | Runtime failure below still occurred |
+-| Original locked sync | Terminal | uv sync --locked --extra test | Failed: outdated lock, exit 1 | baseline-lock-mismatch-transcript.txt; baseline-dependency-metadata.json |
+-| Original window smoke test | Offscreen Qt | python verify_offscreen_qtest.py, bounded at 45 seconds | Failed immediately: missing callback, exit 1 | baseline-window.log |
+-| Original pytest collection | Pytest | python -m pytest --collect-only -q screen_assistant/test_verification.py | Failed: zero tests, exit 5 | baseline-pytest.log |
+-| Fresh repaired environment | Fresh extraction / terminal | uv sync --locked --extra test | Passed, exit 0; new .venv | fresh-sync.log |
+-| Full repaired suite | Offscreen Qt + fake HTTP server | QT_QPA_PLATFORM=offscreen timeout 45 uv run --locked --extra test python -m pytest -v | **51 passed in 7.76 seconds**, exit 0 | pytest.log |
+-| Foundation QTest entry point | Offscreen Qt | QT_QPA_PLATFORM=offscreen timeout 45 uv run --locked --extra test python verify_offscreen_qtest.py | **7 passed**, 44 deselected; exit 0 | foundation.log |
+-| Runtime-only install | Separate new environment | uv sync --locked with UV_PROJECT_ENVIRONMENT pointing at a new directory | Passed, exit 0; no pytest installed | runtime-sync.log |
+-| Runtime import | Runtime-only environment | uv run --locked python -c "import screen_assistant; import screen_assistant.__main__; print(screen_assistant.__version__)" | Passed, exit 0; printed 0.2.0 | runtime-import.log |
+-| Minimum-size readability and disabled Ask | Offscreen render | Capture MainWindow at 620 × 440 and inspect the image | Passed at that size in this environment | offscreen-minimum.png |
+-| Packaged source fidelity | Byte comparison | Compare all 20 project files with the tested extraction | Passed | SOURCE_SHA256SUMS.txt identifies delivered project bytes |
++| Locked install with test extra | Terminal, existing isolated environment | `uv sync --locked --extra test` under a 60-second bound | Passed, exit 0; built 0.3.0 | `evidence/text-questions/locked-sync.log` |
++| Normal runtime install | Terminal, existing isolated environment | `timeout 45 uv sync --locked` | Passed, exit 0 | `evidence/text-questions/runtime-sync.log` |
++| Runtime import and version | Runtime environment without test extra | Import package and entry point; compare installed metadata version | Passed, exit 0; both versions 0.3.0 | `evidence/text-questions/runtime-import.log` |
++| Full regression suite | Offscreen Qt and fake loopback HTTP server | `QT_QPA_PLATFORM=offscreen timeout 45 uv run --locked --extra test python -m pytest -q` | **76 passed in 15.10 seconds**, exit 0 | `evidence/text-questions/pytest.log` |
++| Text payloads and model capabilities | Actual Qt client with fake HTTP responses | Text question with both a text model and a vision model; reject image with text-only model; reject embedding-only model | Passed within the 76 cases | Collected tests in `screen_assistant/test_verification.py` |
++| Text UI and mode changes | Offscreen widgets and fake server | Ask/Enter without image, blank questions, attach/clear image, cancel, switch model, close, late reply | Passed within the 76 cases | Same suite; requests inspected for absent image/history |
++| Existing image workflow | Offscreen widgets and fake server | Load/preview PNG and JPEG; ask, cancel, validate files, restore geometry, About and Quit | Passed within the 76 cases | Same suite; these are not additional test counts |
++| Text readability with dark palette | Offscreen render | Simulated dark Fusion palette at 620 × 440; inspect ready and answer views | Inspected; readable in this simulated environment | `evidence/text-questions/offscreen-text-ready-dark-palette.png` and `offscreen-text-answer-dark-palette.png` |
++| Third-party dependency pins | Static comparison | Compare all non-project entries in old and new `uv.lock` | All 11 unchanged; only project version changed | Old/new lockfiles in `UPDATE.patch` |
++| User's prior image workflow | User report | Latest conversation says image questions now work | User-reported success; no independent performance claim | Conversation |
++| New text workflow on user's PC | Live desktop and real Ollama inference | Follow START_HERE; ask without an image, then test an image and return to text | Pending | This environment cannot inspect the user's desktop or Ollama |
+ 
+-The 51 cases exercise actual widget actions and network requests: PNG/JPEG,
+-invalid files, independent byte/pixel limits, opening without sending, real
+-request fields and base64 content, verified/text-only models, malformed responses,
+-HTTP errors, redirects, oversized responses, slow/trickling responses, cancellation,
+-request replacement, model switches and delayed replies. They also exercise the
+-actual modal About dialog, all three close paths, a clean Qt event-loop exit,
+-preview resizing, invalid geometry, and size restoration with observation off.
+-Tests use temporary settings and synthetic images.
++The successful suite uses synthetic data and a fake server. It establishes
++client behavior, not model answer quality or speed. Neither an offscreen
++render nor a running GUI event loop proves a live desktop launch.
+ 
+-The seven foundation tests are a subset of the 51, **not seven extra independent
+-passes**. They replace the old 13-property script; no old count is carried forward.
++## Attempts and environment
+ 
+-## Failed attempts and temporary settings
++- The first `uv lock --offline` attempt failed because Pillow metadata was not
++  cached. A bounded ordinary `uv lock` succeeded in 23.09 seconds, updating only
++  screen-assistant from 0.2.0 to 0.3.0. No dependency upgrades were introduced.
++- An initial direct-venv run also passed all 76 cases before the locked run.
++  The locked run above is the reported verification result, not an extra count.
++- `QT_QPA_PLATFORM=offscreen` was scoped to tests and rendering. No
++  `LD_LIBRARY_PATH` workaround or headless default was added to normal startup.
++- Test settings and synthetic images were isolated. No PC settings, services,
++  installed models, desktop shortcuts or unrelated files were changed.
++- No completed test run timed out. The 180-second model-request deadline and
++  non-streaming response behavior remain unchanged; this update does not claim
++  to improve real-model speed.
++- Historical repair results are retained in
++  `evidence/previous-verification-0.2.0.md`; they describe the preceding build.
+ 
+-- After the interruption, one dependency-install attempt timed out fetching
+-  setuptools metadata. A normal retry succeeded. No dependency source, system
+-  library, or security setting was changed to obtain that result.
+-- A later attempt to reproduce the original locked-sync error stopped earlier
+-  on a PyPI metadata timeout, exit 2. See
+-  evidence/baseline-sync-retry-network-failure.log. This does not invalidate
+-  the earlier recorded lock mismatch or the independent metadata comparison.
+-- No completed repaired test run timed out. A timeout must be recorded as a
+-  failed check; a GUI event loop simply remaining alive is not a test pass.
+-- QT_QPA_PLATFORM=offscreen was scoped to headless tests/renders. Temporary
+-  UV_PROJECT_ENVIRONMENT and test settings locations isolated verification.
+-  No LD_LIBRARY_PATH workaround was used. No headless default was added to
+-  normal application startup.
+-- Offscreen evidence is not evidence of a live desktop launch.
++## Smallest remaining check
+ 
+-## Desktop and real-model checks
+-
+-| Check | Test mode | Command or procedure | Result | Evidence |
+-|---|---|---|---|---|
+-| libxcb-cursor0 on the user's PC | User terminal | apt install output supplied in conversation | Already installed, version 0.1.4-1build1 | User output; not a current blocker |
+-| Earlier foundation appearance | User desktop | User's screenshot and confirmation | User-confirmed for the earlier build | Conversation; not this repaired build |
+-| Repaired build on Linux Mint desktop | Live desktop | From repaired root, env -u QT_QPA_PLATFORM uv run --locked python -m screen_assistant | Pending | No interactive PC desktop available to this review |
+-| Repaired build resize, About, Quit/Ctrl+Q, position and size round-trip | Live desktop | Follow README manual checklist | Pending; corresponding offscreen paths passed | Needs user's desktop session |
+-| Real vision-model responses | Local Ollama inference | Open 3 non-sensitive images; record model tag, responses and errors | Pending | Test server is simulated; no real model run |
+-| Disabled Ask with no verified model | Live desktop | Inspect before selecting a verified vision model | Pending on PC; passed offscreen | Offscreen render and tests |
+-
+-Smallest remaining actions: launch this repaired copy in the user's existing
+-desktop session; then exercise its manual checklist with an installed local
+-vision model. No package reinstall or large model download is assumed.
+-The previously reported ordinary llama3.2:latest is text-only; check the actual
+-server model list and selected model's capabilities before choosing a download.
+-
+-## Permission history
+-
+-The pasted prior report quotes the rejection:
+-**"Edit approval denied by ACP client; file was not modified."**
+-That is an approval denial. Writing the blocked edit through a terminal is not
+-evidence of approval and must not be used to bypass such a gate. This review
+-cannot independently inspect the historical ACP event beyond the supplied text.
+-
+-No such policy rejection occurred during these isolated repairs. One malformed
+-patch was rejected because it targeted the same file twice; it was corrected
+-as an ordinary Update File patch. That was a patch-format error, not an
+-approval restriction.
++Launch this new folder on the user's desktop, check About shows 0.3.0, choose a
++local text model and ask "What is two plus two?" without opening an image. Then
++attach a non-sensitive image, select a vision model, ask about it, clear it and
++ask another text question. Record any exact error and the selected model tag.
+ 
+ ## Suggested Git checkpoint
+ 
+ ```text
+-fix: repair image-question workflow and reproducible verification
++feat: allow local text questions with optional images
+ 
+-Repair UI wiring, model capability checks, request completion, cancellation,
+-timeouts, image validation and geometry restoration. Align project metadata,
+-lockfile and verification entry points. Fresh extracted build passes 51 tests
+-using offscreen Qt and a fake Ollama server. Live desktop verification of this
+-repaired build and real-model accuracy remain pending.
++Accept verified text-generation models for questions without images, retain
++vision checks for attachments, and select prompts and request fields for the
++current inputs. Clarify readiness and keep text surfaces readable with a dark
++desktop palette. Locked offscreen verification passes 76 tests with a fake
++Ollama server. Real-model testing of the new text workflow remains pending.
+ ```
+ 
+-No Git commit was created by this review. Stop at this checkpoint.
++No Git commit was created. No screen capture or other integration was added.
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [project]
+ name = "screen-assistant"
+-version = "0.2.0"
++version = "0.3.0"
+ description = "Desktop assistant for viewing content"
+ readme = "README.md"
+ requires-python = ">=3.12"
+--- a/screen_assistant/__init__.py
++++ b/screen_assistant/__init__.py
+@@ -9,4 +9,4 @@
+ or the installed console script ``screen-assistant``.
+ """
+ 
+-__version__ = "0.2.0"
++__version__ = "0.3.0"
+--- a/screen_assistant/about_dialog.py
++++ b/screen_assistant/about_dialog.py
+@@ -15,7 +15,7 @@
+     layout = QVBoxLayout(dialog)
+     body = QLabel(
+         f"Screen Assistant {__version__}\n\n"
+-        "Open one image and ask a local Ollama vision model about it. "
++        "Ask a local Ollama model a text question, or attach an image for a vision model. "
+         "The app does not capture your screen or keep a conversation history.\n\n"
+         f"Python {platform.python_version()} · PySide6 {PySide6.__version__} · Qt {qVersion()}"
+     )
+--- a/screen_assistant/main_window.py
++++ b/screen_assistant/main_window.py
+@@ -1,4 +1,4 @@
+-"""Native desktop UI for one explicitly opened image and one local-model answer."""
++"""Native desktop UI for questions with an optional image and one local answer."""
+ from __future__ import annotations
+ 
+ from PySide6.QtCore import QEvent, Qt
+@@ -54,11 +54,11 @@
+         root.addWidget(self._central_stack, 1)
+ 
+         self._empty_state = self._label(
+-            "Open one PNG or JPEG, check the Ollama connection, select an installed "
+-            "vision model, and type a question.\n\n"
+-            "Opening an image sends nothing. Ask sends that image and question to "
+-            "Ollama on this computer. Use a local model and disable cloud inference "
+-            "in Ollama for local-only processing.\n\n"
++            "Check connection, choose an installed local model, and type a question. "
++            "No image is required.\n\n"
++            "To ask about an image, open a PNG or JPEG and choose a vision model. "
++            "Clear image returns to text questions. Ask sends your question and any "
++            "attached image to Ollama on this computer. Each question is independent.\n\n"
+             "Screen observation is off. This app does not capture your screen."
+         )
+         self._empty_state.setProperty("role", "empty-state")
+@@ -124,21 +124,20 @@
+ 
+         question_row = QHBoxLayout()
+         self.question_input = QLineEdit()
+-        self.question_input.setPlaceholderText("Type your question about this image…")
+-        self.question_input.setAccessibleName("Question about this image")
++        self.question_input.setPlaceholderText("Type a question — no image needed…")
++        self.question_input.setAccessibleName("Question")
+         self.question_input.textChanged.connect(self._update_controls)
+         self.question_input.returnPressed.connect(self._on_ask_pressed)
+         question_row.addWidget(self.question_input, 1)
+         self.ask_button = QPushButton("Ask")
+         self.ask_button.setObjectName("askButton")
+-        self.ask_button.setToolTip("Requires an image, a question, and a verified vision model.")
+         self.ask_button.clicked.connect(self._on_ask_pressed)
+         question_row.addWidget(self.ask_button)
+         root.addLayout(question_row)
+ 
+         status_row = QHBoxLayout()
+         status_row.addWidget(self._label("Source:"))
+-        self.source_indicator = QLabel("No source selected")
++        self.source_indicator = QLabel("Text only — no image")
+         self.source_indicator.setTextFormat(Qt.TextFormat.PlainText)
+         self.source_indicator.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+         status_row.addWidget(self.source_indicator, 1)
+@@ -205,7 +204,6 @@
+         self._state.set_image(None)
+         self._preview_label.clear()
+         self._image_info.clear()
+-        self.question_input.clear()
+         self._clear_result_view()
+         self._update_controls()
+ 
+@@ -240,7 +238,7 @@
+         self._clear_result_view()
+         self._update_controls()
+         name = self.model_combo.currentData()
+-        self.connection_status.setText("Verifying image support…" if name else "Choose a model.")
++        self.connection_status.setText("Checking model capabilities…" if name else "Choose a model.")
+         if name:
+             self._client.verify_model(name)
+ 
+@@ -252,8 +250,18 @@
+         self._update_controls()
+ 
+     def _ready(self):
+-        return bool(self._state.image and self.question_input.text().strip()
+-                    and self._state.has_verified_vision_model and not self._state.request_active)
++        return not self._ask_disabled_reason()
++
++    def _ask_disabled_reason(self):
++        if self._state.request_active:
++            return "Wait for the current answer or press Cancel."
++        if not self._state.has_verified_model:
++            return "Check connection and select an installed text or vision model."
++        if self._state.image is not None and not self._state.has_verified_vision_model:
++            return "This model does not support images. Clear the image or choose a vision model."
++        if not self.question_input.text().strip():
++            return "Type a question."
++        return ""
+ 
+     def _on_ask_pressed(self):
+         if not self._ready():
+@@ -268,13 +276,13 @@
+     def _on_analysis_started(self):
+         self._state.start_request()
+         self._central_stack.setCurrentWidget(self._answer_view)
+-        self._answer_text.setPlainText("Analyzing…")
++        self._answer_text.setPlainText("Waiting for Ollama…")
+         self._answer_meta.clear()
+         self._update_controls()
+ 
+     def _on_analysis_cancelled(self):
+         self._state.cancel_request()
+-        self._answer_text.setPlainText("Analysis cancelled.")
++        self._answer_text.setPlainText("Request cancelled.")
+         self._answer_meta.clear()
+         self._update_controls()
+ 
+@@ -293,20 +301,34 @@
+         self._state.finish_request()
+         self._state.set_error(message)
+         self._central_stack.setCurrentWidget(self._answer_view)
+-        self._answer_text.setPlainText("Analysis failed.\n\n" + message)
++        self._answer_text.setPlainText("Request failed.\n\n" + message)
+         self._answer_meta.clear()
+         self._update_controls()
+ 
+     def _update_controls(self):
+-        self.ask_button.setEnabled(self._ready())
++        reason = self._ask_disabled_reason()
++        has_image = self._state.image is not None
++        self.ask_button.setEnabled(not reason)
++        self.ask_button.setToolTip(reason or (
++            "Send this question and image." if has_image else "Send this text question."))
+         self.cancel_button.setEnabled(self._state.request_active)
+         self.question_input.setEnabled(not self._state.request_active)
+-        self.clear_image_button.setEnabled(self._state.image is not None)
+-        self.clear_image_action.setEnabled(self._state.image is not None)
++        self.question_input.setPlaceholderText(
++            "Type your question about this image…" if has_image
++            else "Type a question — no image needed…")
++        self.clear_image_button.setEnabled(has_image)
++        self.clear_image_action.setEnabled(has_image)
++        if self._state.has_verified_model:
++            if has_image and not self._state.has_verified_vision_model:
++                self.connection_status.setText(
++                    "This model does not support images. Clear the image or choose a vision model.")
++            else:
++                self.connection_status.setText(
++                    "Ready for image questions." if has_image else "Ready for text questions.")
+         self._update_source()
+ 
+     def _update_source(self):
+-        text = self._state.image.filename if self._state.image else "No source selected"
++        text = self._state.image.filename if self._state.image else "Text only — no image"
+         self.source_indicator.setToolTip(text)
+         self.source_indicator.setText(self.source_indicator.fontMetrics().elidedText(
+             text, Qt.TextElideMode.ElideMiddle, max(1, self.source_indicator.width())))
+--- a/screen_assistant/ollama_client.py
++++ b/screen_assistant/ollama_client.py
+@@ -56,7 +56,7 @@
+         self._manager = QNetworkAccessManager(self)
+         self._manager.setProxy(QNetworkProxy(QNetworkProxy.ProxyType.NoProxy))
+         self._operations: dict[str, _Operation] = {}
+-        self._verified_models: set[str] = set()
++        self._verified_models: dict[str, ModelInfo] = {}
+         self._closed = False
+ 
+     @property
+@@ -177,7 +177,7 @@
+                 return
+             models = [_model_info_from_tag(tag) for tag in tags]
+             self.models_refreshed.emit(models)
+-            message = ("Ollama connected. Choose an installed vision model." if models
++            message = ("Ollama connected. Choose an installed model." if models
+                        else "Ollama connected, but no models are installed.")
+             self.connection_checked.emit(True, message)
+ 
+@@ -190,6 +190,7 @@
+ 
+         def completed(data, error):
+             vision = False
++            completion = False
+             if error is None:
+                 capabilities = data.get("capabilities")
+                 if not isinstance(capabilities, list) or not all(
+@@ -197,35 +198,46 @@
+                 ):
+                     error = "Model capabilities are missing or invalid."
+                 elif name.lower().endswith(":cloud") or data.get("remote_host") or data.get("remote_model"):
+-                    error = "Cloud models are not supported in this milestone."
+-                elif "vision" not in capabilities:
+-                    error = "This model does not support images."
++                    error = "Cloud models are not supported. Choose a local model."
++                elif "completion" not in capabilities:
++                    error = "This model cannot generate answers. Choose a text or vision model."
+                 else:
+-                    vision = True
+-                    self._verified_models.add(name)
+-            info = ModelInfo(name=name, is_available=vision, is_vision=vision,
+-                             extra=error or "Vision capability verified")
+-            self.model_verified.emit(info, vision, error or f"Vision model ready: {name}")
++                    completion = True
++                    vision = "vision" in capabilities
++            info = ModelInfo(name=name, is_available=completion, is_vision=vision,
++                             extra=error or "Answer capability verified",
++                             is_completion=completion)
++            if completion:
++                self._verified_models[name] = info
++            kind = "Text and image model" if vision else "Text model"
++            self.model_verified.emit(info, completion, error or f"{kind} ready: {name}")
+ 
+         self._send("verification", "/api/show", {"model": name},
+                    self._metadata_timeout_ms, completed)
+ 
+     def run_analysis(self, snapshot: AnalysisSnapshot) -> None:
+         self.cancel_analysis()
+-        if snapshot.model_name not in self._verified_models:
+-            self.analysis_failed.emit("Select and verify an installed vision model first.")
++        model = self._verified_models.get(snapshot.model_name)
++        if model is None:
++            self.analysis_failed.emit("Select and verify an installed model first.")
++            return
++        if snapshot.image is not None and not model.is_vision:
++            self.analysis_failed.emit(
++                "This model does not support images. Clear the image or choose a vision model.")
+             return
+         try:
+-            system, user = build_prompt(snapshot.question)
++            system, user = build_prompt(snapshot.question, has_image=snapshot.image is not None)
+         except ValueError as exc:
+             self.analysis_failed.emit(str(exc))
+             return
++        user_message = {"role": "user", "content": user}
++        if snapshot.image is not None:
++            user_message["images"] = [base64.b64encode(snapshot.image.bytes_).decode("ascii")]
+         payload = {
+             "model": snapshot.model_name,
+             "messages": [
+                 {"role": "system", "content": system},
+-                {"role": "user", "content": user,
+-                 "images": [base64.b64encode(snapshot.image.bytes_).decode("ascii")]},
++                user_message,
+             ],
+             "stream": False,
+         }
+@@ -251,7 +263,7 @@
+ 
+ 
+ def _model_info_from_tag(tag: dict) -> ModelInfo:
+-    # /api/tags lists models; /api/show verifies vision support.
++    # /api/tags lists models; /api/show verifies answer and image support.
+     return ModelInfo(name=tag["name"], is_available=True, is_vision=False, extra="Unverified")
+ 
+ 
+--- a/screen_assistant/prompt.py
++++ b/screen_assistant/prompt.py
+@@ -1,5 +1,5 @@
+ # -*- coding: utf-8 -*-
+-"""Prompt construction for the image-question workflow.
++"""Prompt construction for text questions and questions about an image.
+ 
+ Kept in its own small module so the prompt text and rules can be reviewed
+ and changed without touching the UI or the model client. The prompt does
+@@ -19,24 +19,34 @@
+     "Refer to the image as \"this image\", and do not claim access to the user's live screen or other windows."
+ )
+ 
++TEXT_SYSTEM_PROMPT = (
++    "Answer the user's question clearly and directly. "
++    "You have only the text supplied in this request. "
++    "Do not claim access to the user's screen, files, other windows, or earlier questions. "
++    "If the question needs missing context, ask for that context instead of inventing it."
++)
++
+ USER_PROMPT_TEMPLATE = (
+     "Question: {question}\n\n"
+     "Explain this image in relation to the question above."
+ )
+ 
+ 
+-def build_prompt(question: str) -> tuple[str, str]:
++def build_prompt(question: str, *, has_image: bool = True) -> tuple[str, str]:
+     """Return (system, user) prompt text for *question*.
+ 
+     Parameters
+     ----------
+     question:
+-        The user's question about the image. Must be non-empty after
+-        stripping whitespace; callers are responsible for that check.
++        The user's question. Must be non-empty after stripping whitespace.
++    has_image:
++        Include image-specific instructions only when an image is attached.
+     """
+     question = question.strip()
+     if not question:
+         raise ValueError("Question must not be empty.")
++    if not has_image:
++        return TEXT_SYSTEM_PROMPT, question
+     system = SYSTEM_PROMPT
+     user = USER_PROMPT_TEMPLATE.format(question=question)
+     return system, user
+--- a/screen_assistant/state.py
++++ b/screen_assistant/state.py
+@@ -1,4 +1,4 @@
+-"""Transient state for one image and one answer; no content persistence."""
++"""Transient state for an optional image and one answer; no content persistence."""
+ from __future__ import annotations
+ 
+ from screen_assistant.types import LoadedImage, ModelInfo
+@@ -16,9 +16,14 @@
+         self.error: str | None = None
+ 
+     @property
++    def has_verified_model(self) -> bool:
++        model = self.selected_model
++        return bool(model and model.is_available and model.is_completion)
++
++    @property
+     def has_verified_vision_model(self) -> bool:
+         model = self.selected_model
+-        return bool(model and model.is_available and model.is_vision)
++        return bool(self.has_verified_model and model.is_vision)
+ 
+     def clear_result(self) -> None:
+         self.answer = self.answer_model_name = self.answer_duration_ms = None
+--- a/screen_assistant/styles.py
++++ b/screen_assistant/styles.py
+@@ -30,7 +30,32 @@
+ QLabel[role="empty-state"] {
+     color: #4a4a4a;
+     font-size: 14px;
+-    background-color: transparent;
++    background-color: #f7f8fa;
++}
++
++/* Keep text surfaces readable when the desktop supplies a dark Qt palette. */
++QScrollArea {
++    background-color: #f7f8fa;
++    border: none;
++}
++
++QTextEdit, QComboBox, QComboBox QAbstractItemView {
++    background-color: #ffffff;
++    color: #262626;
++    selection-background-color: #1a73e8;
++    selection-color: #ffffff;
++    font-size: 14px;
++}
++
++QComboBox {
++    padding: 4px;
++    border: 1px solid #cfd4da;
++    border-radius: 4px;
++}
++
++QToolButton {
++    color: #262626;
++    background-color: #f7f8fa;
+ }
+ 
+ QLineEdit {
+--- a/screen_assistant/test_verification.py
++++ b/screen_assistant/test_verification.py
+@@ -2,6 +2,7 @@
+ from __future__ import annotations
+ 
+ import base64
++from dataclasses import replace
+ import json
+ import os
+ from pathlib import Path
+@@ -24,7 +25,7 @@
+ from screen_assistant.image_loader import load_image_from_path, open_image_file_dialog
+ from screen_assistant.main_window import MainWindow
+ from screen_assistant.ollama_client import OllamaClient
+-from screen_assistant.prompt import SYSTEM_PROMPT
++from screen_assistant.prompt import SYSTEM_PROMPT, TEXT_SYSTEM_PROMPT
+ from screen_assistant.testing import FakeOllamaServer, Response, VISION_MODEL, TEXT_MODEL, answer_response
+ from screen_assistant.types import AnalysisSnapshot, MAX_IMAGE_BYTES
+ 
+@@ -114,13 +115,20 @@
+     assert window.ask_button.isEnabled()
+ 
+ 
++def select_model(window, name):
++    QTest.mouseClick(window.check_connection_button, Qt.MouseButton.LeftButton)
++    wait_until(lambda: window.model_combo.findData(name) > 0)
++    window.model_combo.setCurrentIndex(window.model_combo.findData(name))
++    wait_until(lambda: window._state.has_verified_model)
++
++
+ def test_import_without_window_or_background_activity():
+     code = ("from PySide6.QtWidgets import QApplication; "
+             "import screen_assistant, screen_assistant.__main__; "
+             "assert QApplication.instance() is None; print(screen_assistant.__version__)")
+     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=10)
+     assert result.returncode == 0, result.stderr
+-    assert result.stdout.strip() == "0.2.0"
++    assert result.stdout.strip() == "0.3.0"
+ 
+ 
+ @pytest.mark.parametrize("format,suffix", [("PNG", ".png"), ("JPEG", ".jpg"), ("JPEG", ".jpeg")])
+@@ -204,11 +212,11 @@
+     client.deleteLater()
+ 
+ 
+-@pytest.mark.parametrize("name,ok", [(VISION_MODEL, True), (TEXT_MODEL, False)])
+-def test_verified_capability_not_model_name(client, server, name, ok):
++@pytest.mark.parametrize("name,vision", [(VISION_MODEL, True), (TEXT_MODEL, False)])
++def test_verified_capability_not_model_name(client, server, name, vision):
+     info, result, message = verify(client, name)
+-    assert result is ok
+-    assert info.is_vision is ok
++    assert result is True and info.is_available and info.is_completion
++    assert info.is_vision is vision
+     request = server.requests_to("/api/show")[-1]
+     assert request["body"] == {"model": name}
+     assert request["headers"]["Content-Type"].startswith("application/json")
+@@ -217,15 +225,20 @@
+ @pytest.mark.parametrize("payload", [
+     {"capabilities": {"vision": True}},
+     {"capabilities": []},
+-    {"capabilities": ["vision"], "remote_host": "https://ollama.com"},
+-    {"capabilities": ["vision"], "remote_model": "remote"},
++    {"capabilities": ["embedding"]},
++    {"capabilities": ["vision"]},
++    {"capabilities": ["completion", "vision"], "remote_host": "https://ollama.com"},
++    {"capabilities": ["completion"], "remote_model": "remote"},
+ ])
+ def test_unknown_or_remote_capabilities_fail_closed(client, server, payload):
+     server.routes["/api/show"] = Response(payload)
+     assert verify(client)[1] is False
+ 
+ 
+-def test_unverified_analysis_sends_nothing(client, snapshot, server):
++@pytest.mark.parametrize("text_only", [False, True])
++def test_unverified_analysis_sends_nothing(client, snapshot, server, text_only):
++    if text_only:
++        snapshot = replace(snapshot, image=None)
+     errors = []
+     client.analysis_failed.connect(errors.append)
+     client.run_analysis(snapshot)
+@@ -256,6 +269,45 @@
+     assert not client.analysis_active
+ 
+ 
++@pytest.mark.parametrize("model", [TEXT_MODEL, VISION_MODEL])
++def test_text_question_payload_omits_images(client, server, model):
++    assert verify(client, model)[1]
++    server.routes["/api/chat"] = answer_response("Four.")
++    answers = []
++    client.analysis_finished.connect(lambda *args: answers.append(args))
++    client.run_analysis(AnalysisSnapshot(None, "  What is two plus two?  ", model))
++    wait_until(lambda: answers)
++    assert answers[0][0:2] == ("Four.", model)
++    payload = server.requests_to("/api/chat")[0]["body"]
++    assert payload["model"] == model
++    assert payload["messages"] == [
++        {"role": "system", "content": TEXT_SYSTEM_PROMPT},
++        {"role": "user", "content": "What is two plus two?"},
++    ]
++    assert all("images" not in message for message in payload["messages"])
++
++
++def test_text_model_rejects_image_without_sending(client, server, snapshot):
++    assert verify(client, TEXT_MODEL)[1]
++    errors = []
++    client.analysis_failed.connect(errors.append)
++    client.run_analysis(replace(snapshot, model_name=TEXT_MODEL))
++    assert len(errors) == 1 and "does not support images" in errors[0]
++    QTest.qWait(30)
++    assert not server.requests_to("/api/chat") and not client.analysis_active
++
++
++@pytest.mark.parametrize("text_only", [False, True])
++def test_blank_question_is_rejected_before_request(client, server, snapshot, text_only):
++    assert verify(client)[1]
++    errors = []
++    client.analysis_failed.connect(errors.append)
++    client.run_analysis(replace(snapshot, image=None if text_only else snapshot.image, question="  "))
++    assert len(errors) == 1 and "empty" in errors[0]
++    assert not server.requests_to("/api/chat")
++
++
++@pytest.mark.parametrize("text_only", [False, True])
+ @pytest.mark.parametrize("response,expected", [
+     (answer_response("   "), "empty"),
+     (Response(b"{invalid"), "invalid JSON"),
+@@ -264,7 +316,9 @@
+     (Response({"error": "model load failed"}, 500), "model load failed"),
+     (Response({}, 302, headers={"Location": "/other"}), "redirect"),
+ ])
+-def test_analysis_failures_are_terminal(client, snapshot, server, response, expected):
++def test_analysis_failures_are_terminal(client, snapshot, server, response, expected, text_only):
++    if text_only:
++        snapshot = replace(snapshot, image=None)
+     assert verify(client)[1]
+     server.routes["/api/chat"] = response
+     errors, answers = [], []
+@@ -277,8 +331,11 @@
+     assert not server.requests_to("/other")
+ 
+ 
++@pytest.mark.parametrize("text_only", [False, True])
+ @pytest.mark.parametrize("trickle", [False, True])
+-def test_total_deadline_stops_slow_response(app, snapshot, server, trickle):
++def test_total_deadline_stops_slow_response(app, snapshot, server, trickle, text_only):
++    if text_only:
++        snapshot = replace(snapshot, image=None)
+     client = OllamaClient(base_url=server.url, analysis_timeout_ms=120)
+     assert verify(client)[1]
+     server.routes["/api/chat"] = (
+@@ -298,8 +355,11 @@
+     client.deleteLater()
+ 
+ 
++@pytest.mark.parametrize("text_only", [False, True])
+ @pytest.mark.parametrize("cancel_first", [True, False])
+-def test_cancel_and_late_reply_cannot_replace_new_answer(client, snapshot, server, cancel_first):
++def test_cancel_and_late_reply_cannot_replace_new_answer(client, snapshot, server, cancel_first, text_only):
++    if text_only:
++        snapshot = replace(snapshot, image=None)
+     assert verify(client)[1]
+     server.routes["/api/chat"] = lambda request: (
+         answer_response("old", delay=.3) if len(server.requests_to("/api/chat")) == 1
+@@ -334,7 +394,8 @@
+     client.verify_model(TEXT_MODEL)
+     wait_until(lambda: results)
+     QTest.qWait(300)
+-    assert len(results) == 1 and results[0][0].name == TEXT_MODEL and results[0][1] is False
++    assert len(results) == 1 and results[0][0].name == TEXT_MODEL and results[0][1] is True
++    assert not results[0][0].is_vision
+ 
+ 
+ def test_foundation_startup_and_about_dialog(window, app, server):
+@@ -343,7 +404,7 @@
+     assert not window.cancel_button.isEnabled()
+     assert window.question_input.isEnabled()
+     assert window.observation_indicator.text() == "Observation off"
+-    assert window.source_indicator.text() == "No source selected"
++    assert window.source_indicator.text() == "Text only — no image"
+     assert window._state.image is None
+     seen = []
+     def dismiss():
+@@ -386,10 +447,78 @@
+     assert window.ask_button.isEnabled() and not window.cancel_button.isEnabled()
+     QTest.mouseClick(window.clear_image_button, Qt.MouseButton.LeftButton)
+     assert window._state.image is None and window._state.answer is None
+-    assert not window.ask_button.isEnabled()
++    assert window.ask_button.isEnabled() and window.question_input.text() == "Explain"
+     assert window._preview_label.pixmap().isNull()
+     assert image_path.read_bytes() == before
+     assert len(server.requests_to("/api/chat")) == 1
++
++
++@pytest.mark.parametrize("model", [TEXT_MODEL, VISION_MODEL])
++def test_ui_asks_without_image_and_without_history(window, server, model):
++    server.routes["/api/chat"] = answer_response("A text answer.", delay=.04)
++    window.question_input.setText("First question")
++    assert not window.ask_button.isEnabled()
++    select_model(window, model)
++    window.question_input.setText("  ")
++    assert not window.ask_button.isEnabled()
++    window.question_input.setText("First question")
++    assert window.ask_button.isEnabled()
++    assert "text questions" in window.connection_status.text()
++    assert "no image" in window.source_indicator.text()
++    QTest.keyClick(window.question_input, Qt.Key.Key_Return)
++    wait_until(lambda: window._state.answer is not None)
++    assert window._answer_text.toPlainText() == "A text answer."
++    window.question_input.setText("Second question")
++    QTest.mouseClick(window.ask_button, Qt.MouseButton.LeftButton)
++    assert not window.ask_button.isEnabled() and window.cancel_button.isEnabled()
++    wait_until(lambda: not window._state.request_active)
++    requests = server.requests_to("/api/chat")
++    assert len(requests) == 2
++    assert requests[-1]["body"]["messages"] == [
++        {"role": "system", "content": TEXT_SYSTEM_PROMPT},
++        {"role": "user", "content": "Second question"},
++    ]
++    assert window._state.image is None
++    assert not window.clear_image_button.isEnabled()
++    assert window.observation_indicator.text() == "Observation off"
++
++
++def test_clear_image_allows_text_model_without_resending_image(window, server, image_path, monkeypatch):
++    select_model(window, TEXT_MODEL)
++    window.question_input.setText("Explain this")
++    assert window.ask_button.isEnabled()
++    open_in_window(window, image_path, monkeypatch)
++    assert not window.ask_button.isEnabled()
++    assert "Clear the image" in window.connection_status.text()
++    assert not server.requests_to("/api/chat")
++    QTest.mouseClick(window.clear_image_button, Qt.MouseButton.LeftButton)
++    assert window.ask_button.isEnabled() and window.question_input.text() == "Explain this"
++    QTest.mouseClick(window.ask_button, Qt.MouseButton.LeftButton)
++    wait_until(lambda: window._state.answer is not None)
++    messages = server.requests_to("/api/chat")[0]["body"]["messages"]
++    assert all("images" not in message for message in messages)
++    assert messages[-1]["content"] == "Explain this"
++
++
++@pytest.mark.parametrize("action", ["cancel", "attach", "switch", "close"])
++def test_text_request_invalidated_by_ui_change(window, server, image_path, monkeypatch, action):
++    select_model(window, TEXT_MODEL)
++    window.question_input.setText("A text question")
++    server.routes["/api/chat"] = answer_response("obsolete text answer", delay=.25)
++    QTest.mouseClick(window.ask_button, Qt.MouseButton.LeftButton)
++    wait_until(lambda: server.requests_to("/api/chat"))
++    if action == "cancel":
++        QTest.mouseClick(window.cancel_button, Qt.MouseButton.LeftButton)
++    elif action == "attach":
++        open_in_window(window, image_path, monkeypatch)
++    elif action == "switch":
++        window.model_combo.setCurrentIndex(window.model_combo.findData(VISION_MODEL))
++    else:
++        window.close()
++    QTest.qWait(350)
++    assert window._state.answer is None and not window._state.request_active
++    assert "obsolete text answer" not in window._answer_text.toPlainText()
++    assert not window._client.analysis_active
+ 
+ 
+ @pytest.mark.parametrize("action", ["cancel", "clear", "replace", "switch", "close"])
+--- a/screen_assistant/types.py
++++ b/screen_assistant/types.py
+@@ -1,5 +1,5 @@
+ # -*- coding: utf-8 -*-
+-"""Shared types and constants for the image-question workflow.
++"""Shared types and constants for questions with an optional image.
+ 
+ Everything here is application state used by the UI, the model client, and
+ the image handling code. No user content is logged here.
+@@ -62,6 +62,7 @@
+     is_available: bool
+     is_vision: bool
+     extra: str
++    is_completion: bool = False
+ 
+ 
+ @dataclass(frozen=True)
+@@ -72,6 +73,6 @@
+     from the image and question the user actually submitted.
+     """
+ 
+-    image: LoadedImage
++    image: LoadedImage | None
+     question: str
+     model_name: str
+--- a/uv.lock
++++ b/uv.lock
+@@ -184,7 +184,7 @@
+ 
+ [[package]]
+ name = "screen-assistant"
+-version = "0.2.0"
++version = "0.3.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pillow" },

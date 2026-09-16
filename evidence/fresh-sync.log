@@ -1,0 +1,24 @@
+Working directory: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+Command: ['uv', 'sync', '--locked', '--extra', 'test']
+QT_QPA_PLATFORM: unset
+Exit: 0
+Elapsed seconds: 0.531
+
+Using CPython 3.12.14 interpreter at: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3
+Creating virtual environment at: .venv
+Resolved 12 packages in 0.69ms
+   Building screen-assistant @ file:///review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+      Built screen-assistant @ file:///review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+Prepared 1 package in 478ms
+Installed 11 packages in 33ms
+ + iniconfig==2.3.0
+ + packaging==26.3
+ + pillow==12.3.0
+ + pluggy==1.6.0
+ + pygments==2.21.0
+ + pyside6==6.11.2
+ + pyside6-addons==6.11.2
+ + pyside6-essentials==6.11.2
+ + pytest==9.1.1
+ + screen-assistant==0.2.0 (from file:///review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired)
+ + shiboken6==6.11.2

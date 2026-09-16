@@ -1,0 +1,13 @@
+Working directory: /review-workspace/screen_assistant_repair/project
+Command: uv sync --locked --extra test
+Timeout: 60s
+Resolved 12 packages in 11ms
+   Building screen-assistant @ file:///review-workspace/screen_assistant_repair/project
+      Built screen-assistant @ file:///review-workspace/screen_assistant_repair/project
+Prepared 1 package in 18.82s
+Uninstalled 1 package in 2ms
+Installed 1 package in 1ms
+ - screen-assistant==0.2.0 (from file:///review-workspace/screen_assistant_repair/project)
+ + screen-assistant==0.3.0 (from file:///review-workspace/screen_assistant_repair/project)
+
+Exit: 0

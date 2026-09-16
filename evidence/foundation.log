@@ -1,0 +1,24 @@
+Working directory: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+Command: ['timeout', '45', 'uv', 'run', '--locked', '--extra', 'test', 'python', 'verify_offscreen_qtest.py']
+QT_QPA_PLATFORM: offscreen
+Exit: 0
+Elapsed seconds: 1.130
+
+Qt test platform: offscreen; tests use a fake Ollama server.
+Live desktop appearance and real-model accuracy require separate manual checks.
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+configfile: pyproject.toml
+collecting ... collected 51 items / 44 deselected / 7 selected
+
+screen_assistant/test_verification.py::test_foundation_startup_and_about_dialog PASSED [ 14%]
+screen_assistant/test_verification.py::test_foundation_preview_resizes_without_growing_minimum PASSED [ 28%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[quit] PASSED [ 42%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[shortcut] PASSED [ 57%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[close] PASSED [ 71%]
+screen_assistant/test_verification.py::test_foundation_invalid_geometry_is_ignored PASSED [ 85%]
+screen_assistant/test_verification.py::test_foundation_application_event_loop_exits_cleanly PASSED [100%]
+
+======================= 7 passed, 44 deselected in 0.93s =======================

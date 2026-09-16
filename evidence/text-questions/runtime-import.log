@@ -1,0 +1,6 @@
+Working directory: /review-workspace/screen_assistant_repair/project
+Command: uv run --locked python -c import screen_assistant, screen_assistant.__main__; import importlib.metadata; print(screen_assistant.__version__); assert importlib.metadata.version("screen-assistant") == screen_assistant.__version__
+Timeout: 45s
+0.3.0
+
+Exit: 0

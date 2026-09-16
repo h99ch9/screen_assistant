@@ -1,0 +1,6 @@
+Working directory: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+Command: ['uv', 'run', '--locked', 'python', '-c', 'import screen_assistant; import screen_assistant.__main__; print(screen_assistant.__version__)']
+New runtime-only environment: /review-workspace/screen_assistant_repair/runtime-only-environment
+Exit: 0
+
+0.2.0

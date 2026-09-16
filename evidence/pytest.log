@@ -1,0 +1,67 @@
+Working directory: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+Command: ['timeout', '45', 'uv', 'run', '--locked', '--extra', 'test', 'python', '-m', 'pytest', '-v']
+QT_QPA_PLATFORM: offscreen
+Exit: 0
+Elapsed seconds: 8.196
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /review-workspace/screen_assistant_repair/fresh-extraction/screen-assistant-repaired
+configfile: pyproject.toml
+testpaths: screen_assistant/test_verification.py
+collecting ... collected 51 items
+
+screen_assistant/test_verification.py::test_import_without_window_or_background_activity PASSED [  1%]
+screen_assistant/test_verification.py::test_image_formats_and_unchanged_file[PNG-.png] PASSED [  3%]
+screen_assistant/test_verification.py::test_image_formats_and_unchanged_file[JPEG-.jpg] PASSED [  5%]
+screen_assistant/test_verification.py::test_image_formats_and_unchanged_file[JPEG-.jpeg] PASSED [  7%]
+screen_assistant/test_verification.py::test_invalid_images[empty] PASSED [  9%]
+screen_assistant/test_verification.py::test_invalid_images[corrupt] PASSED [ 11%]
+screen_assistant/test_verification.py::test_invalid_images[wrong-extension] PASSED [ 13%]
+screen_assistant/test_verification.py::test_invalid_images[renamed-bmp] PASSED [ 15%]
+screen_assistant/test_verification.py::test_invalid_images[missing] PASSED [ 17%]
+screen_assistant/test_verification.py::test_image_byte_limit_before_reading PASSED [ 19%]
+screen_assistant/test_verification.py::test_image_pixel_limit_before_decode PASSED [ 21%]
+screen_assistant/test_verification.py::test_file_dialog_cancel_uses_real_import PASSED [ 23%]
+screen_assistant/test_verification.py::test_connection_and_models_use_real_ollama_schema PASSED [ 25%]
+screen_assistant/test_verification.py::test_empty_or_invalid_model_list[models0-True] PASSED [ 27%]
+screen_assistant/test_verification.py::test_empty_or_invalid_model_list[broken-False] PASSED [ 29%]
+screen_assistant/test_verification.py::test_empty_or_invalid_model_list[models2-False] PASSED [ 31%]
+screen_assistant/test_verification.py::test_connection_refused PASSED    [ 33%]
+screen_assistant/test_verification.py::test_verified_capability_not_model_name[test-vision:latest-True] PASSED [ 35%]
+screen_assistant/test_verification.py::test_verified_capability_not_model_name[llama3.2:latest-False] PASSED [ 37%]
+screen_assistant/test_verification.py::test_unknown_or_remote_capabilities_fail_closed[payload0] PASSED [ 39%]
+screen_assistant/test_verification.py::test_unknown_or_remote_capabilities_fail_closed[payload1] PASSED [ 41%]
+screen_assistant/test_verification.py::test_unknown_or_remote_capabilities_fail_closed[payload2] PASSED [ 43%]
+screen_assistant/test_verification.py::test_unknown_or_remote_capabilities_fail_closed[payload3] PASSED [ 45%]
+screen_assistant/test_verification.py::test_unverified_analysis_sends_nothing PASSED [ 47%]
+screen_assistant/test_verification.py::test_analysis_payload_and_fragmented_response PASSED [ 49%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response0-empty] PASSED [ 50%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response1-invalid JSON] PASSED [ 52%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response2-invalid JSON] PASSED [ 54%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response3-incomplete] PASSED [ 56%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response4-model load failed] PASSED [ 58%]
+screen_assistant/test_verification.py::test_analysis_failures_are_terminal[response5-redirect] PASSED [ 60%]
+screen_assistant/test_verification.py::test_total_deadline_stops_slow_response[False] PASSED [ 62%]
+screen_assistant/test_verification.py::test_total_deadline_stops_slow_response[True] PASSED [ 64%]
+screen_assistant/test_verification.py::test_cancel_and_late_reply_cannot_replace_new_answer[True] PASSED [ 66%]
+screen_assistant/test_verification.py::test_cancel_and_late_reply_cannot_replace_new_answer[False] PASSED [ 68%]
+screen_assistant/test_verification.py::test_superseded_model_verification_cannot_enable_old_model PASSED [ 70%]
+screen_assistant/test_verification.py::test_foundation_startup_and_about_dialog PASSED [ 72%]
+screen_assistant/test_verification.py::test_ui_open_select_type_ask_and_clear PASSED [ 74%]
+screen_assistant/test_verification.py::test_ui_changes_cancel_pending_answer[cancel] PASSED [ 76%]
+screen_assistant/test_verification.py::test_ui_changes_cancel_pending_answer[clear] PASSED [ 78%]
+screen_assistant/test_verification.py::test_ui_changes_cancel_pending_answer[replace] PASSED [ 80%]
+screen_assistant/test_verification.py::test_ui_changes_cancel_pending_answer[switch] PASSED [ 82%]
+screen_assistant/test_verification.py::test_ui_changes_cancel_pending_answer[close] PASSED [ 84%]
+screen_assistant/test_verification.py::test_foundation_preview_resizes_without_growing_minimum PASSED [ 86%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[quit] PASSED [ 88%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[shortcut] PASSED [ 90%]
+screen_assistant/test_verification.py::test_foundation_geometry_and_clean_quit[close] PASSED [ 92%]
+screen_assistant/test_verification.py::test_foundation_invalid_geometry_is_ignored PASSED [ 94%]
+screen_assistant/test_verification.py::test_foundation_application_event_loop_exits_cleanly PASSED [ 96%]
+screen_assistant/test_verification.py::test_oversized_server_response_fails_once PASSED [ 98%]
+screen_assistant/test_verification.py::test_cancelled_file_picker_preserves_current_image PASSED [100%]
+
+============================== 51 passed in 7.76s ==============================
