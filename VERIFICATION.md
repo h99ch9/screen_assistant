@@ -1,3 +1,43 @@
+# Capture area update — 0.4.0 (2026-09-20)
+
+Implemented one-shot Linux X11 display/region selection, preview, and explicit Ask.
+No new dependency, continuous observation, automatic inference, or disk capture.
+
+Verification performed in the development container:
+
+- `uv sync --locked --extra test`: succeeded; third-party pins unchanged.
+- `QT_QPA_PLATFORM=offscreen timeout 60 uv run --locked --extra test python -m pytest -q`:
+  **89 passed in 18.33s**. Tests use a fake Ollama server and synthetic images.
+- New checks cover reverse dragging, Escape, pixel crop boundaries, 1x/1.25x/2x
+  scale conversion, capture preview without inference, matching submitted bytes,
+  text-only model restrictions, clear-to-text, cancelled/failed capture preserving
+  input, closing before/during selection, and invalidation of an older answer.
+- Inspected an offscreen render at the 620 × 440 minimum window size: controls
+  and instructions fit. This is not a live-desktop render.
+- Initial fractional-scale test expected 25 pixels instead of the correctly
+  rounded 26-pixel coverage; corrected the assertion, then the suite passed.
+
+Not verified here: actual X11 `grabWindow` output, compositor repaint timing,
+physical multi-monitor placement/disconnection, Linux Mint desktop behavior,
+and inference with a real local vision model. No live display is available;
+attempting to install an Xvfb test display failed due to container permissions.
+Wayland and other platforms intentionally fall back to Open image.
+
+Manual acceptance on Linux Mint X11:
+
+1. Open a harmless page/terminal. Capture area, drag around a known label, inspect
+   the preview for exact boundaries and absence of the assistant window.
+2. Choose a local vision model, Ask, and compare the answer with visible facts.
+3. Capture again and cancel with Escape/right-click; prior image/question remain.
+4. Clear image and ask a text question. Close during selection and relaunch.
+5. On available hardware test scaling, a second display (including one left of
+   primary), and disconnecting/changing the selected display. Mark absent hardware
+   untested. A capture remains a frozen timestamped snapshot until captured again.
+
+The reports below describe earlier versions, not the capture implementation.
+
+---
+
 # Screen Assistant 0.3.0 verification — 2026-09-16
 
 This update makes images optional. It builds on the previously delivered 0.2.0

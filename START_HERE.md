@@ -1,7 +1,8 @@
-# Open Screen Assistant 0.3.0
+# Open Screen Assistant 0.4.0
 
-This update lets you ask questions without uploading an image. Image questions
-remain available when you attach an image and choose a vision model.
+This update adds **Capture area** on Linux X11. Drag an area, review the preview,
+then Ask using a vision model. Escape cancels. Text-only and uploaded-image
+questions remain available. On Wayland, use Open image.
 
 1. Clone `https://github.com/h99ch9/screen_assistant.git`, or download the
    repository ZIP and extract it into a new folder. Keep your working copy.
@@ -15,14 +16,14 @@ QT_QPA_PLATFORM=offscreen timeout 45 uv run --locked --extra test python -m pyte
 env -u QT_QPA_PLATFORM uv run --locked python -m screen_assistant
 ```
 
-The automated test run should report **76 passed**. It uses synthetic images and
+The automated test run should report **89 passed**. It uses synthetic images and
 a fake local server. No real Ollama model is needed for those checks.
 
 The last command opens the actual desktop application. Check Open image, the
 preview, resizing, About, Quit/Ctrl+Q, and remembered size/position. The app starts
 with observation off and Ask disabled. For a text answer, click **Check
 connection**, select an installed local text or vision model, type a question,
-and click **Ask**. No image is needed. About should show version **0.3.0**.
+and click **Ask**. No image is needed. About should show version **0.4.0**.
 
 If an image is attached, **Clear image** returns to text questions while keeping
 your typed question. An attached image still requires a vision model.
@@ -35,6 +36,6 @@ VERIFICATION.md separates actual results, failed attempts and pending checks.
 UPDATE.patch is historical reference for the 0.2.0 to 0.3.0 changes; do not apply
 it to this repository, which already contains those changes.
 SOURCE_SHA256SUMS.txt identifies the tested project files.
-The evidence/text-questions folder includes this update's logs and explicitly
+The evidence/text-questions folder includes the previous update's logs and explicitly
 offscreen renders. The previous repair report is retained as historical evidence.
 Real Ollama inference on your PC was not performed by this review.
