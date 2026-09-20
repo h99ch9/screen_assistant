@@ -128,7 +128,7 @@ def test_import_without_window_or_background_activity():
             "assert QApplication.instance() is None; print(screen_assistant.__version__)")
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "0.3.0"
+    assert result.stdout.strip() == "0.4.0"
 
 
 @pytest.mark.parametrize("format,suffix", [("PNG", ".png"), ("JPEG", ".jpg"), ("JPEG", ".jpeg")])
@@ -642,3 +642,158 @@ def test_cancelled_file_picker_preserves_current_image(window, image_path, monke
     QTest.mouseClick(window.open_image_button, Qt.MouseButton.LeftButton)
     assert window._state.image is previous
     assert not server.requests
+
+
+@pytest.mark.parametrize("scale", [1, 1.25, 2])
+def test_capture_crop_maps_pixels_and_encodes_same_preview(app, scale):
+    from PySide6.QtCore import QRectF, QSize
+    from PySide6.QtGui import QImage, QPixmap
+    from screen_assistant.capture import crop_snapshot
+    frame = QPixmap(int(200 * scale), int(100 * scale))
+    frame.fill(Qt.GlobalColor.red)
+    frame.setDevicePixelRatio(scale)
+    image = crop_snapshot(frame, QRectF(20, 10, 40, 20), QSize(200, 100), "Capture test")
+    assert (image.width, image.height) == ((50, 26) if scale == 1.25 else (int(40 * scale), int(20 * scale)))
+    decoded = QImage.fromData(image.bytes_, "PNG")
+    assert decoded == image.pixmap.toImage()
+    assert decoded.pixelColor(0, 0) == Qt.GlobalColor.red
+
+
+def test_capture_selector_reverse_drag_and_escape(app):
+    from PySide6.QtCore import QPoint, QRect
+    from PySide6.QtGui import QPixmap
+    from screen_assistant.capture import RegionSelector
+    frame = QPixmap(200, 100)
+    frame.fill(Qt.GlobalColor.blue)
+    dialog = RegionSelector(frame, QRect(-200, 0, 200, 100))
+    dialog.show()
+    QTest.mousePress(dialog, Qt.MouseButton.LeftButton, pos=QPoint(150, 80))
+    QTest.mouseRelease(dialog, Qt.MouseButton.LeftButton, pos=QPoint(30, 20))
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    assert dialog.selection.width() == 120 and dialog.selection.height() == 60
+    dialog.show()
+    QTest.keyClick(dialog, Qt.Key.Key_Escape)
+    assert dialog.result() == QDialog.DialogCode.Rejected
+    dialog.deleteLater()
+
+
+def fake_capture(monkeypatch, result):
+    monkeypatch.setattr("screen_assistant.main_window.capture_unavailable_reason", lambda: "")
+    monkeypatch.setattr("screen_assistant.main_window.choose_screen", lambda parent: object())
+    def select(screen, parent):
+        assert not parent.isVisible()
+        if isinstance(result, Exception):
+            raise result
+        return result
+    monkeypatch.setattr("screen_assistant.main_window.select_region", select)
+
+
+def test_capture_preview_sends_only_on_ask_then_clear(window, server, monkeypatch, image_path):
+    image = replace(load_image_from_path(str(image_path)), path="Capture test time")
+    fake_capture(monkeypatch, image)
+    select_model(window, VISION_MODEL)
+    window.question_input.setText("Explain selected area")
+    QTest.mouseClick(window.capture_button, Qt.MouseButton.LeftButton)
+    assert window._capturing and not window.ask_button.isEnabled()
+    wait_until(lambda: not window._capturing)
+    assert window.isVisible() and window._state.image is image
+    assert window._central_stack.currentWidget() is window._preview_area
+    assert not server.requests_to("/api/chat")
+    assert window.observation_indicator.text() == "Observation off"
+    QTest.mouseClick(window.ask_button, Qt.MouseButton.LeftButton)
+    wait_until(lambda: window._state.answer is not None)
+    payload = server.requests_to("/api/chat")[-1]["body"]
+    assert base64.b64decode(payload["messages"][-1]["images"][0]) == image.bytes_
+    window._on_clear_image()
+    window._on_ask_pressed()
+    wait_until(lambda: window._state.answer is not None)
+    assert "images" not in server.requests_to("/api/chat")[-1]["body"]["messages"][-1]
+
+
+@pytest.mark.parametrize("result", [None, ValueError("Display unavailable")])
+def test_capture_cancel_or_error_preserves_image_and_question(window, server, monkeypatch, image_path, result):
+    open_in_window(window, image_path, monkeypatch)
+    old = window._state.image
+    window.question_input.setText("Keep this question")
+    fake_capture(monkeypatch, result)
+    warnings = []
+    monkeypatch.setattr("screen_assistant.main_window.QMessageBox.warning", lambda *args: warnings.append(args))
+    window._on_capture_area()
+    wait_until(lambda: not window._capturing)
+    assert window.isVisible() and window._state.image is old
+    assert window.question_input.text() == "Keep this question"
+    assert bool(warnings) == isinstance(result, Exception)
+    assert not server.requests
+
+
+def test_close_before_capture_timer_does_not_reopen(window, monkeypatch, server):
+    fake_capture(monkeypatch, None)
+    calls = []
+    monkeypatch.setattr("screen_assistant.main_window.select_region", lambda *args: calls.append(args))
+    window._on_capture_area()
+    window.close()
+    QTest.qWait(350)
+    assert not calls and not window.isVisible() and not server.requests
+
+
+def test_capture_with_text_model_blocks_image_request(window, monkeypatch, image_path, server):
+    select_model(window, TEXT_MODEL)
+    fake_capture(monkeypatch, load_image_from_path(str(image_path)))
+    window.question_input.setText("Explain")
+    window._on_capture_area()
+    wait_until(lambda: not window._capturing)
+    assert not window.ask_button.isEnabled()
+    window._on_ask_pressed()
+    assert not server.requests_to("/api/chat")
+
+
+def test_capture_unsupported_session_does_not_hide_or_collect(window, monkeypatch, server):
+    monkeypatch.setattr("screen_assistant.main_window.capture_unavailable_reason", lambda: "Use Open image.")
+    messages = []
+    monkeypatch.setattr("screen_assistant.main_window.QMessageBox.information", lambda *args: messages.append(args))
+    window._on_capture_area()
+    assert messages and window.isVisible() and not window._capturing
+    assert not server.requests
+
+
+def test_capture_crop_excludes_surrounding_pixels(app):
+    from PySide6.QtCore import QRectF, QSize
+    from PySide6.QtGui import QImage, QPixmap
+    from screen_assistant.capture import crop_snapshot
+    frame = QImage(100, 100, QImage.Format.Format_RGB32)
+    frame.fill(Qt.GlobalColor.red)
+    for x in range(30, 50):
+        for y in range(40, 60):
+            frame.setPixelColor(x, y, Qt.GlobalColor.blue)
+    image = crop_snapshot(QPixmap.fromImage(frame), QRectF(30, 40, 20, 20), QSize(100, 100), "test")
+    decoded = QImage.fromData(image.bytes_)
+    assert decoded.size() == QSize(20, 20)
+    assert all(decoded.pixelColor(x, y) == Qt.GlobalColor.blue for x in range(20) for y in range(20))
+
+
+def test_capture_invalidates_pending_answer(window, server, monkeypatch, image_path):
+    select_model(window, TEXT_MODEL)
+    window.question_input.setText("Old question")
+    server.routes["/api/chat"] = answer_response("obsolete reply", delay=.6)
+    window._on_ask_pressed()
+    wait_until(lambda: server.requests_to("/api/chat"))
+    fake_capture(monkeypatch, load_image_from_path(str(image_path)))
+    window._on_capture_area()
+    wait_until(lambda: not window._capturing)
+    QTest.qWait(400)
+    assert window._state.answer is None
+    assert "obsolete reply" not in window._answer_text.toPlainText()
+    assert len(server.requests_to("/api/chat")) == 1
+
+
+def test_close_rejects_active_selector(window):
+    from PySide6.QtCore import QRect
+    from PySide6.QtGui import QPixmap
+    from screen_assistant.capture import RegionSelector
+    frame = QPixmap(200, 100)
+    frame.fill(Qt.GlobalColor.blue)
+    selector = RegionSelector(frame, QRect(0, 0, 200, 100), window)
+    QTimer.singleShot(10, window.close)
+    assert selector.exec() == QDialog.DialogCode.Rejected
+    assert not window.isVisible()
+    selector.deleteLater()

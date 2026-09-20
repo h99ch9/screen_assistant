@@ -16,7 +16,7 @@ def show_about(parent=None) -> None:
     body = QLabel(
         f"Screen Assistant {__version__}\n\n"
         "Ask a local Ollama model a text question, or attach an image for a vision model. "
-        "The app does not capture your screen or keep a conversation history.\n\n"
+        "Capture area takes a one-time screenshot on Linux X11. No continuous observation or conversation history.\n\n"
         f"Python {platform.python_version()} · PySide6 {PySide6.__version__} · Qt {qVersion()}"
     )
     body.setTextFormat(Qt.TextFormat.PlainText)
