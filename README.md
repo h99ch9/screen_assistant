@@ -1,13 +1,13 @@
-# Screen Assistant 0.3.0 — text questions and optional images
+# Screen Assistant 0.4.0 — capture an area, preview, and ask
 
 Screen Assistant answers **text questions without requiring an image** using
 an installed local Ollama model. You can optionally open a PNG or JPEG and ask
 a vision model about it. It uses Python 3.12+, PySide6 and uv on the existing
 Linux Mint desktop setup.
 
-This update makes the image optional and accepts verified text models.
-Screen capture, continuous observation, browser and terminal
-integration, voice, model downloads and additional providers are outside scope.
+This update adds one-shot screen-region capture on Linux X11. Text questions and
+optional image files remain supported. Continuous observation, browser and terminal
+integration, voice, model downloads and additional providers remain outside scope.
 
 ## Run on your PC
 
@@ -39,7 +39,7 @@ existing PC shortcuts were not inspected or modified.
 
 If --locked reports a mismatch, stop and inspect pyproject.toml versus uv.lock
 before changing dependencies. This update changed only the application's own
-version in the lockfile, from 0.2.0 to 0.3.0. All third-party pins are unchanged;
+version in the lockfile, from 0.3.0 to 0.4.0. All third-party pins are unchanged;
 PySide6, Essentials, Addons and Shiboken remain at 6.11.2.
 requirements.txt is a generated runtime-only export; uv.lock is authoritative.
 
@@ -69,6 +69,34 @@ non-streaming response. The app sends no prior answer or conversation history
 with a new question. Observation stays off.
 Only window geometry is written to QSettings; the old observations_on key is
 removed without discarding geometry.
+
+## Capture area (Linux X11)
+
+1. Click **Capture area** or press **Ctrl+Shift+A** within the app. With several
+   displays, choose one first. The assistant hides briefly.
+2. Drag a rectangle on the frozen display image. Release to return to the crop
+   preview. **Escape** or right-click cancels and preserves the previous image.
+3. Inspect the preview, select a vision model, type a question, and press **Ask**.
+   Selecting an area sends nothing to the model. Ask sends exactly the previewed
+   crop; it does not silently refresh the screen. Capture again for fresh content.
+4. **Clear image** removes the capture and returns to text questions.
+
+The source label includes capture time and display name. A single display frame
+is temporarily held in memory for selection; only the selected crop is retained
+when the selector closes. Nothing is saved to disk by capture. Existing image
+size limits apply, including a 25-million-pixel limit on the temporary display
+frame. Observation remains off. Overlapping windows and notifications visible
+at capture time may appear; review the crop before Ask.
+
+This backend supports Linux X11 only. Wayland (including XWayland), other OSes,
+and headless sessions show an explanation and keep **Open image** available.
+There is no automatic switch to a broader capture source. Select one display at
+a time; regions cannot span displays. A disconnected or resized display cancels
+selection. The 300 ms hide delay allows the desktop to repaint, but compositor
+behavior still needs checking on the target desktop.
+
+Automated tests cover the selector and request flow. See VERIFICATION.md for
+actual results and the remaining Linux Mint, multi-monitor, and real-model checks.
 
 ## Ollama and limits
 
@@ -156,6 +184,9 @@ The user reports that the preceding image-question build now works. This is
 user-reported evidence, not an independently recorded accuracy or performance
 test. The new text-question flow has been tested offscreen with a fake server;
 its real-model and live desktop checks remain to be performed on the PC.
+
+The root screen-assistant-github-ready.zip is the historical 0.3.0 delivery;
+use the current Git checkout or GitHub Download ZIP for 0.4.0.
 
 See VERIFICATION.md and evidence/ for the review findings, exact results and
 remaining checks. Offscreen renders are explicitly labelled; they do not prove

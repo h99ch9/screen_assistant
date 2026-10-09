@@ -9,4 +9,4 @@ window or start any background activity. Run the GUI via the entry point::
 or the installed console script ``screen-assistant``.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

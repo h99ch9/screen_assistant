@@ -1,7 +1,7 @@
 """Native desktop UI for questions with an optional image and one local answer."""
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, Qt
+from PySide6.QtCore import QEvent, QTimer, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QComboBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 
 from screen_assistant.about_dialog import show_about
 from screen_assistant.config import AppConfig
+from screen_assistant.capture import RegionSelector, capture_unavailable_reason, choose_screen, select_region
 from screen_assistant.image_loader import (
     image_description, load_image_from_path, open_image_file_dialog, preview_pixmap,
 )
@@ -30,6 +31,11 @@ class MainWindow(QMainWindow):
         self._client = client if client is not None else OllamaClient(self)
         self._state = AppState()
         self._closing = False
+        self._capturing = False
+        self._capture_timer = QTimer(self)
+        self._capture_timer.setSingleShot(True)
+        self._capture_timer.timeout.connect(self._finish_capture)
+        self._capture_screen = None
         self._build_ui()
         self._build_menu()
         self._bind_client()
@@ -59,7 +65,7 @@ class MainWindow(QMainWindow):
             "To ask about an image, open a PNG or JPEG and choose a vision model. "
             "Clear image returns to text questions. Ask sends your question and any "
             "attached image to Ollama on this computer. Each question is independent.\n\n"
-            "Screen observation is off. This app does not capture your screen."
+            "Screen observation is off. Capture area takes one screenshot on request; review the preview before pressing Ask."
         )
         self._empty_state.setProperty("role", "empty-state")
         self._empty_state.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -95,11 +101,13 @@ class MainWindow(QMainWindow):
         image_row = QHBoxLayout()
         self.open_image_button = QPushButton("Open image")
         self.open_image_button.clicked.connect(self._on_open_image)
+        self.capture_button = QPushButton("Capture area")
+        self.capture_button.clicked.connect(self._on_capture_area)
         self.clear_image_button = QPushButton("Clear image")
         self.clear_image_button.clicked.connect(self._on_clear_image)
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self._on_cancel_pressed)
-        for button in (self.open_image_button, self.clear_image_button, self.cancel_button):
+        for button in (self.open_image_button, self.capture_button, self.clear_image_button, self.cancel_button):
             image_row.addWidget(button)
         image_row.addStretch()
         root.addLayout(image_row)
@@ -151,6 +159,10 @@ class MainWindow(QMainWindow):
         self.open_image_action.setShortcut("Ctrl+O")
         self.open_image_action.triggered.connect(self._on_open_image)
         menu.addAction(self.open_image_action)
+        self.capture_action = QAction("Capture &area…", self)
+        self.capture_action.setShortcut("Ctrl+Shift+A")
+        self.capture_action.triggered.connect(self._on_capture_area)
+        menu.addAction(self.capture_action)
         self.clear_image_action = QAction("C&lear image", self)
         self.clear_image_action.setShortcut("Ctrl+Shift+Delete")
         self.clear_image_action.triggered.connect(self._on_clear_image)
@@ -192,12 +204,58 @@ class MainWindow(QMainWindow):
         except ValueError as exc:
             QMessageBox.warning(self, "Could not open image", str(exc))
             return
+        self._attach_image(image)
+
+    def _attach_image(self, image):
         self._client.cancel_analysis()
         self._state.set_image(image)
         self._clear_result_view()
         self._image_info.setText(image_description(image))
         self._update_preview()
         self._update_controls()
+
+    def _on_capture_area(self):
+        if self._capturing or self._closing:
+            return
+        reason = capture_unavailable_reason()
+        if reason:
+            QMessageBox.information(self, "Capture unavailable", reason)
+            return
+        try:
+            screen = choose_screen(self)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Capture unavailable", str(exc))
+            return
+        if screen is None:
+            return
+        self._client.cancel_analysis()
+        self._capturing = True
+        self._capture_screen = screen
+        self._update_controls()
+        self.hide()
+        # Let the desktop repaint without the assistant before taking the snapshot.
+        self._capture_timer.start(300)
+
+    def _finish_capture(self):
+        if self._closing:
+            return
+        error = None
+        try:
+            image = select_region(self._capture_screen, self)
+            if image is not None and not self._closing:
+                self._attach_image(image)
+        except (ValueError, RuntimeError) as exc:
+            error = str(exc)
+        finally:
+            self._capture_screen = None
+            self._capturing = False
+            if not self._closing:
+                self.show()
+                self.raise_()
+                self.activateWindow()
+                self._update_controls()
+                if error:
+                    QMessageBox.warning(self, "Could not capture area", error)
 
     def _on_clear_image(self):
         self._client.cancel_analysis()
@@ -253,6 +311,8 @@ class MainWindow(QMainWindow):
         return not self._ask_disabled_reason()
 
     def _ask_disabled_reason(self):
+        if self._capturing:
+            return "Finish or cancel the area selection first."
         if self._state.request_active:
             return "Wait for the current answer or press Cancel."
         if not self._state.has_verified_model:
@@ -308,6 +368,8 @@ class MainWindow(QMainWindow):
     def _update_controls(self):
         reason = self._ask_disabled_reason()
         has_image = self._state.image is not None
+        self.capture_button.setEnabled(not self._capturing)
+        self.capture_action.setEnabled(not self._capturing)
         self.ask_button.setEnabled(not reason)
         self.ask_button.setToolTip(reason or (
             "Send this question and image." if has_image else "Send this text question."))
@@ -349,6 +411,10 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self._closing = True
+        self._capture_timer.stop()
+        for selector in self.findChildren(RegionSelector):
+            selector.reject()
+        self._capture_screen = None
         self._client.close()
         self._state.cancel_request()
         self._state.set_image(None)
